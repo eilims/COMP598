@@ -1,0 +1,150 @@
+#include <stdio.h>
+#include <ncurses.h>
+
+int main(int argc, char** argv)
+{
+   //Enabling ev3 setup
+   printf("Welcome to Crane Game!\n");
+   printf("Currently Setting and checking for all motors!\n");
+   
+   //Check if we are connected to a brick
+   int returnValue = ev3_init();
+   if(returnValue == 0)
+     {
+	printf("No brick found sorry!\n");
+	return 1;
+     }
+   else if(returnValue == 1)
+     {
+	printf("Brick found continuing setup!\n");
+     }
+   else 
+     {
+	printf("An error has occured detecting the brick!\n");
+	return 2;
+     }
+   
+   //Get all ports
+   //Should display 8
+   returnValue = ev3_port_init();
+   if(returnValue == -1)
+     {
+	printf("An error has occured detecting the ports!\n");
+	return 3;
+     }
+   printf("There are %d ports detected\n", returnValue);
+   
+   //No motors in this project are servos only
+   //Should display 0
+   returnValue = ev3_servo_init();
+   if(returnValue == -1)
+     {
+	printf("An error has occured detecting the servo motors!\n");
+	return 4;
+     }
+   printf("There are %d servo motors detected\n", returnValue);
+   
+   //All relevant motors
+   //Should display 3
+   returnValue = ev3_tacho_init();
+   if(returnValue == -1)
+     {
+	printf("An error has occured detecting the tacho motors!\n");
+	return 5;
+     }
+   printf("There are %d tacho motors detected\n", returnValue);
+   
+   
+   
+   
+   
+   //Enabling keyboard input
+   //Enable curses mode
+   //Use printw from here on in!
+   initscr();
+   //Recieve raw data from keyboard
+   raw();
+   //Do not echo the input keystrokes
+   noecho();
+   
+   int key;
+   int isQPressed = 0;
+   
+   printw("Press H to view the help menu! Good Luck!\n");
+   
+   while(!isQPressed)
+     {
+	
+	//Get user input
+	key = getch();
+	switch(key) 
+	  {
+	   
+	   //Left
+	   case 'a':
+	     printw("You pressed A!\n");
+	     break;
+	     
+	   //Right
+	   case 'd':
+	     printw("You pressed D!\n");
+	     break;
+	   
+	   //Pulley Up
+	   case 'w':
+	     printw("You pressed W!\n");
+	     break;
+	   
+	   //Pulley Down
+	   case 's':
+	     printw("You pressed S!\n");
+	     break;
+	     
+	   //Claw open
+	   case 'k':
+	     printw("You pressed K!\n");
+	     break;
+	     
+	   //Claw close
+	   case 'l':
+	     printw("You pressed L!\n");
+	     break;
+	     
+	   //Auto Routine
+	   case 'i':
+	     printw("You pressed I!\n");
+	     break;
+	     
+	   //Quit
+	   case 'q':
+	     printw("You pressed Q!\n");
+	     printw("Quitting\n");
+	     isQPressed = 1;
+	     break;
+	     
+	    //Help Menu
+	    case 'h':
+	     printw("You pressed H!\n");
+	     printw("Help Menu\n");
+	     printw("A is Left. D is Right\n");
+	     printw("W raises the claw. S lowers the claw\n");
+	     printw("K opens the claw. L closes the claw\n");
+	     printw("I initiates automatic routine for grabbing and return to base\n");
+	     printw("H is the help menu\n");
+	     printw("Q is quit\n");
+	     break;
+	     
+	    //Default for any other key
+	    default:
+	     printw("That is not a valid key!\n");
+	     break;
+	  }
+	
+     }
+   
+   //Disable curses mode
+   endwin();
+   printf("Goodbye\n");
+   return 0;
+   
+}
