@@ -67,9 +67,9 @@ int main(int argc, char** argv)
 
    //MotorA is 0, MotorB is 1, MotorC is 2
    //Configure tacho motors
-   uint8_t carMotor = 5;
-   uint8_t pulleyMotor = 6;
-   uint8_t clawMotor = 7;
+   uint8_t carMotor = 7;
+   uint8_t pulleyMotor = 4;
+   uint8_t clawMotor = 8;
    uint8_t ev3_sn[] =  {carMotor, pulleyMotor, clawMotor};
 
    //Getting motor max speeds
@@ -87,13 +87,12 @@ int main(int argc, char** argv)
    int driving_speed = max_speed_A/4;
    int pulley_speed = max_speed_B/4;
    int claw_speed = max_speed_C/2;
-   int direction_assist = -1;
+   int direction_assist = 1;
 
    //Set stopping operation
-   for (i = 5; i < 8; i++)
-     {
-        set_tacho_stop_action_inx(i, TACHO_HOLD);
-     }
+  set_tacho_stop_action_inx(carMotor, TACHO_HOLD);
+  set_tacho_stop_action_inx(pulleyMotor, TACHO_HOLD);
+  set_tacho_stop_action_inx(clawMotor, TACHO_HOLD);
 
    //Enabling keyboard input
    //Enable curses mode
