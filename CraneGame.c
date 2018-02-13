@@ -1,4 +1,4 @@
-include <stdio.h>
+#include <stdio.h>
 #include <ncurses.h>
 
 #include <ev3.h>
@@ -67,9 +67,9 @@ int main(int argc, char** argv)
 
    //MotorA is 0, MotorB is 1, MotorC is 2
    //Configure tacho motors
-   uint8_t carMotor = 0;
-   uint8_t pulleyMotor = 1;
-   uint8_t clawMotor = 2;
+   uint8_t carMotor = 5;
+   uint8_t pulleyMotor = 6;
+   uint8_t clawMotor = 7;
    uint8_t ev3_sn[] =  {carMotor, pulleyMotor, clawMotor};
 
    //Getting motor max speeds
@@ -82,13 +82,15 @@ int main(int argc, char** argv)
    printf("Max speed Motor A: %d\n", max_speed_A);
    printf("Max speed Motor B: %d\n", max_speed_B);
    printf("Max speed Motor C: %d\n", max_speed_C);
+   
+   //Driving controls
    int driving_speed = max_speed_A/4;
    int pulley_speed = max_speed_B/4;
    int claw_speed = max_speed_C/2;
-   int direction_assist = 1;
+   int direction_assist = -1;
 
    //Set stopping operation
-   for (i = 0; i < 3; i++)
+   for (i = 5; i < 8; i++)
      {
         set_tacho_stop_action_inx(i, TACHO_HOLD);
      }
@@ -106,8 +108,13 @@ int main(int argc, char** argv)
 
    int key;
    int isQPressed = 0;
-   int count = 0;
-   printw("Press H to view the help menu. Q to quit. Good Luck!\n");
+   printw("A is Left. D is Right\n");
+   printw("W raises the claw. S lowers the claw\n");
+   printw("K opens the claw. L closes the claw\n");
+   printw("I initiates automatic routine for grabbing and return to base\n");
+   printw("H is the help menu\n");
+   printw("Q is quit\n");
+   printw("Good Luck!\n");   
 
    while(!isQPressed)
      {
@@ -121,7 +128,9 @@ int main(int argc, char** argv)
            case 'a':
              //printw("You pressed A!\n");
              set_tacho_speed_sp(carMotor, direction_assist * driving_speed);
-             set_tacho_time_sp(carMotor, 50);
+             set_tacho_time_sp(carMotor, -1);
+	     set_tacho_command_inx(carMotor, TACHO_RUN_TIMED);
+	     break;
 
            //Right
            case 'd':
@@ -133,23 +142,35 @@ int main(int argc, char** argv)
 
            //Pulley Up
            case 'w':
-             printw("You pressed W!\n");
-             break;
+             //printw("You pressed W!\n");
+             set_tacho_speed_sp(pulleyMotor, direction_assist * pulley_speed);
+	     set_tacho_time_sp(pulleyMotor, 50);
+	     set_tacho_command_inx(pulleyMotor, TACHO_RUN_TIMED);
+	     break;
 
            //Pulley Down
            case 's':
-             printw("You pressed S!\n");
-             break;
+             //printw("You pressed S!\n");
+             set_tacho_speed_sp(pulleyMotor, -direction_assist * pulley_speed);
+	     set_tacho_time_sp(pulleyMotor, 50);
+	     set_tacho_command_inx(pulleyMotor, TACHO_RUN_TIMED);
+	     break;
 
            //Claw open
            case 'k':
-             printw("You pressed K!\n");
-             break;
+             //printw("You pressed K!\n");
+             set_tacho_speed_sp(clawMotor, direction_assist * claw_speed);
+	     set_tacho_time_sp(clawMotor, 50);
+	     set_tacho_command_inx(clawMotor, TACHO_RUN_TIMED);
+	     break;
 
            //Claw close
            case 'l':
-             printw("You pressed L!\n");
-             break;
+             //printw("You pressed L!\n");
+             set_tacho_speed_sp(clawMotor, -direction_assist * claw_speed);
+	     set_tacho_time_sp(clawMotor, 50);
+	     set_tacho_command_inx(clawMotor, TACHO_RUN_TIMED);
+	     break;
 
            //Auto Routine
            case 'i':
@@ -163,11 +184,7 @@ int main(int argc, char** argv)
              isQPressed = 1;
              break;
 
-            //Help Menu
-            case 'h':
-             printw("You pressed H!\n");
-
-            //Help Menu
+           //Help Menu
             case 'h':
              printw("You pressed H!\n");
              printw("Help Menu\n");
@@ -181,7 +198,6 @@ int main(int argc, char** argv)
 
             //Default for any other key
             default:
-             count = 0;
              break;
           }
 
