@@ -5,6 +5,30 @@
 #include <ev3_port.h>
 #include <ev3_tacho.h>
 
+#include <unistd.h>
+#define Sleep( msec ) usleep(( msec ) * 1000 )
+
+int moveDevice(int motor, int* encoder_count, int motor_speed, int number_of_rotations){
+    get_tacho_position(motor, encoder_count);
+    set_tacho_speed_sp(motor, motor_speed);
+    //printw("SN:%d Encoder:%d\n", motor, encoder_count);
+    set_tacho_command_inx(motor, TACHO_RUN_FOREVER);  
+    //360 ticks in a roations times number of desired rotations
+    if (number_of_rotations < 0) {
+        while(*encoder_count > (360 * number_of_rotations)){
+            get_tacho_position(motor, encoder_count);
+        }
+    } else {
+        while(*encoder_count < 0){
+            get_tacho_position(motor, encoder_count);
+        }
+    }
+    set_tacho_command_inx(motor, TACHO_STOP);
+}
+
+
+
+
 int main(int argc, char** argv)
 {
    //control variables
@@ -64,12 +88,26 @@ int main(int argc, char** argv)
 
           }
      }
-
-   //MotorA is 0, MotorB is 1, MotorC is 2
+	
+  
    //Configure tacho motors
-   uint8_t carMotor = 7;
-   uint8_t pulleyMotor = 4;
-   uint8_t clawMotor = 8;
+   uint8_t carMotor = 0;
+   uint8_t pulleyMotor = 1;
+   uint8_t clawMotor = 2;
+   
+   if(argc > 3) {
+    carMotor = atoi(argv[1]);
+    pulleyMotor = atoi(argv[2]);
+    clawMotor = atoi(argv[3]);
+   } else {
+	printf("Please enter in three arguments. motorA port, motorB port, motorC port\n");
+  	return 6;
+   }
+  
+   printf("carMotor SN is: %d\n", carMotor);
+   printf("pulleyMotor SN is: %d\n", pulleyMotor);
+   printf("clawMotor SN is: %d\n", clawMotor);
+
    uint8_t ev3_sn[] =  {carMotor, pulleyMotor, clawMotor};
 
    //Getting motor max speeds
@@ -105,6 +143,10 @@ int main(int argc, char** argv)
    //no delay between key presses
    nodelay(stdscr, 1);
 
+
+   int encoder_count = 0;
+   int pulley_encoder_count = 0;
+   int claw_encoder_count = 0;
    int key;
    int isQPressed = 0;
    printw("A is Left. D is Right\n");
@@ -114,6 +156,14 @@ int main(int argc, char** argv)
    printw("H is the help menu\n");
    printw("Q is quit\n");
    printw("Good Luck!\n");   
+
+   set_tacho_position(carMotor, 0);
+   set_tacho_position(pulleyMotor, 0);
+   set_tacho_position(clawMotor, 0);
+   set_tacho_command_inx(carMotor, TACHO_STOP);
+   set_tacho_command_inx(pulleyMotor, TACHO_STOP);
+   set_tacho_command_inx(clawMotor, TACHO_STOP);
+   
 
    while(!isQPressed)
      {
@@ -173,8 +223,55 @@ int main(int argc, char** argv)
 
            //Auto Routine
            case 'i':
-             printw("You pressed I!\n");
-             break;
+	     //printw("The number of encoder ticks is: %d\n", encoder_count);
+ 	     set_tacho_position(pulleyMotor, 0);
+             set_tacho_position(clawMotor, 0);
+       	   
+	     set_tacho_command_inx(carMotor, TACHO_STOP);
+   	     set_tacho_command_inx(pulleyMotor, TACHO_STOP);
+   	     set_tacho_command_inx(clawMotor, TACHO_STOP);
+   
+		 
+	     //lower pulley
+	     moveDevice(pulleyMotor, &pulley_encoder_count, -direction_assist * pulley_speed, -3);	
+	    
+	     //Close claw
+	     moveDevice(clawMotor, &claw_encoder_count, -direction_assist * claw_speed, -3);	   	
+	     
+             //raise pulley
+             moveDevice(pulleyMotor, &pulley_encoder_count, direction_assist * pulley_speed, 3);
+
+	     //return to base
+   	     get_tacho_position(carMotor, &encoder_count);
+	     if (encoder_count > 0) {
+		 set_tacho_speed_sp(carMotor, -direction_assist * driving_speed);
+	         set_tacho_command_inx(carMotor, TACHO_RUN_FOREVER);
+		 while(encoder_count > 0){
+		     get_tacho_position(carMotor, &encoder_count);
+		 }
+	    	 set_tacho_command_inx(carMotor, TACHO_STOP);
+             } else if (encoder_count < 0) {
+		 set_tacho_speed_sp(carMotor, direction_assist * driving_speed);
+	         set_tacho_command_inx(carMotor, TACHO_RUN_FOREVER);
+		 while(encoder_count < 0){
+		     get_tacho_position(carMotor, &encoder_count);
+		 }
+	    	 set_tacho_command_inx(carMotor, TACHO_STOP);
+	     }
+
+	     //lower pulley
+	     moveDevice(pulleyMotor, &pulley_encoder_count, -direction_assist * pulley_speed, -3);	
+	    
+	     //open claw
+	     moveDevice(clawMotor, &claw_encoder_count, direction_assist * claw_speed, 3);	   	
+	     
+             //raise pulley
+             moveDevice(pulleyMotor, &pulley_encoder_count, direction_assist * pulley_speed, 3);
+
+
+	
+	     
+	   break;
 
            //Quit
            case 'q':
@@ -205,6 +302,14 @@ int main(int argc, char** argv)
    //Disable curses mode
    endwin();
    printf("Goodbye\n");
+
+   //Disable locking so the damn ringing stops holy moly
+   set_tacho_stop_action_inx(carMotor, TACHO_COAST);
+   set_tacho_stop_action_inx(pulleyMotor, TACHO_COAST);
+   set_tacho_stop_action_inx(clawMotor, TACHO_COAST);
+   set_tacho_command_inx(carMotor, TACHO_STOP);
+   set_tacho_command_inx(pulleyMotor, TACHO_STOP);
+   set_tacho_command_inx(clawMotor, TACHO_STOP);
    return 0;
 
 }
