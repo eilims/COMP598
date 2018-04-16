@@ -1,0 +1,35 @@
+ for(;;){
+        costate {
+	        switch(currentState){
+	            case 0:
+	                stopSignal(stopped);
+	                advancedGreenSignal(running);
+	                break;
+	            case 1:
+	                stopSignal(stopped);
+	                greenSignal(running);
+	                break;
+	            case 2:
+	                stopSignal(stopped);
+	                yellowSignal(running);
+	                break;
+	            case 3:
+	                stopSignal(stopped);
+	                stopSignal(running);
+	                break;
+	            default:
+
+	            if(currentState == 3){
+	                if(stopped == NS){
+	                    stopped = EW;
+	                    running = NS;
+	                } else {
+	                    stopped = NS;
+	                    running = EW;
+	                }
+	            }
+	            currentState = (currentState++) % 4;
+	            DelayMs(500);
+	         }
+        }
+    }

@@ -1,0 +1,5 @@
+#use rcm3000.lib
+
+main(){
+ 	brdInit();
+}
