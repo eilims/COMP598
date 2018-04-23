@@ -9,7 +9,8 @@
  * LIB\TCPIP\TCP_CONFIG.LIB for instructions on how to set the
  * configuration.
  */
-#define TCPCONFIG 7
+#define TCPCONFIG 5
+#define USE_RABBITWEB 1
 
 /*
  * TCP/IP modification - reduce TCP socket buffer
@@ -33,7 +34,7 @@
 #define HTTP_MAXSERVERS 2
 #define MAX_TCP_SOCKET_BUFFERS 3
 
-#define REDIRECTHOST "192.168.0.101"
+#define REDIRECTHOST ""MY_IP_ADDRESS""//"192.168.0.104"
 
 #define OFF 0
 #define ON 1
@@ -59,7 +60,7 @@
 /* the default for / must be first */
 const HttpType http_types[] =
 {
-   { ".shtml", "text/html", shtml_handler}, // ssi
+   { ".shtml", "text/html", zhtml_handler}, // ssi
    { ".html", "text/html", NULL},           // html
    { ".cgi", "", NULL},                     // cgi
    { ".gif", "image/gif", NULL}
@@ -67,7 +68,7 @@ const HttpType http_types[] =
 
 typedef struct {
 	char *name;
-	int value;
+	char *value;
 } FORMType;
 
 enum directions{
@@ -95,7 +96,7 @@ int parsePost(HttpState *state){
 
     if (state->subsubstate >= state->content_length) {
         state->buffer[(int)state->content_length] = '\0';
-        http_scanpost(FORMSpec.name, state->buffer, FORMSpec.value, 1);
+        http_scanpost(FORMSpec.name, state->buffer, FORMSpec.value, 20);
         return 1;
     }
     return 0;
@@ -113,12 +114,16 @@ int Submit(HttpState* state){
 			state->length = 0;
 		}
     } else {
-        FORMSpec.value = 0;
+        FORMSpec.value[0] = '\0';
 
         state->p = state->buffer;
-        if(parsePost(state)) currentSpeed = FORMSpec.value;
-        cgi_redirectto(state,REDIRECTTO);
+        if(parsePost(state)){
+            currentSpeed = atoi(FORMSpec.value);
+        }
     }
+    state->substate = 0;
+    cgi_redirectto(state,REDIRECTTO);
+    return 0;
 }
 
 void stopSignal(int direction){
@@ -177,10 +182,16 @@ void main(){
     int currentState;
     int stopped;
     int running;
+    char data[20];
+
+    word dhcp_ok, dhcp_fb;
+    DHCPInfo * di;
+    long myip;
+    long mynetmask;
 
     //Inital values for data packet -- this must be done
-    FORMSpec.name = "numerical_input;
-    FORMSpec.value = 500;
+    FORMSpec.name = "numerical_input";
+    FORMSpec.value = data;
     currentSpeed = 500;
 
     //Initial states for variables
@@ -204,6 +215,8 @@ void main(){
     glPrintf (0,  0, &fi6x8,  "DO NOT DOUBT");
     glPrintf (0,  8, &fi6x8,  "MY POWER");
     glPrintf (0,  16, &fi6x8,  "Hi Ed");
+
+    printf("%s\n", REDIRECTTO);
 
     for(;;){
         http_handler();

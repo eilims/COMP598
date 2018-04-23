@@ -9,7 +9,7 @@
  * LIB\TCPIP\TCP_CONFIG.LIB for instructions on how to set the
  * configuration.
  */
-#define TCPCONFIG 5
+#define TCPCONFIG 7
 #define USE_RABBITWEB 1
 
 /*
@@ -34,7 +34,7 @@
 #define HTTP_MAXSERVERS 2
 #define MAX_TCP_SOCKET_BUFFERS 3
 
-#define REDIRECTHOST ""MY_IP_ADDRESS""//"192.168.0.104"
+#define REDIRECTHOST "192.168.0.104"
 
 #define OFF 0
 #define ON 1
@@ -44,7 +44,7 @@
 #define LIGHT_LEFT_EW 3
 #define LIGHT_RIGHT_EW 4
 
-#define REDIRECTTO      "/"//"http://" REDIRECTHOST ""
+#define REDIRECTTO      "http://" REDIRECTHOST ""
 
 #memmap xmem
 
@@ -103,7 +103,6 @@ int parsePost(HttpState *state){
 }
 
 int Submit(HttpState* state){
-   longword myip;
 	if (state->length) {
 		/* buffer to write out */
 		if (state->offset < state->length) {
@@ -179,12 +178,11 @@ const HttpSpec http_flashspec[] =
 };
 
 void main(){
+
     int currentState;
     int stopped;
     int running;
     char data[20];
-    longword myip;
-    myip = 0;
 
     //Inital values for data packet -- this must be done
     FORMSpec.name = "numerical_input";
@@ -213,22 +211,9 @@ void main(){
     glPrintf (0,  8, &fi6x8,  "MY POWER");
     glPrintf (0,  16, &fi6x8,  "Hi Ed");
 
-
-
     for(;;){
         http_handler();
-
-
-
         costate{
-        if(myip == 0){
-            while(myip == 0){
-                ifconfig(IF_ETH0, IFS_UP, IFG_IPADDR, &myip, IFS_END);
-                waitfor(DelayMs(500));
-            }
-            printf("%08lX\n", myip);
-            ip_print_ifs();
-        }
         switch(currentState){
             case 0:
 				    stopSignal(stopped);
